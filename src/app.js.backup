@@ -1,0 +1,65 @@
+import {compose, curry, equals, filter, id, ifElse, init, last, map, multiply, not, range, reverse, split, sum, zipWith} from 'ramda'
+
+// const equalsAppliedToParts = curry(
+//     (leftFunction, rightFunction, xs) => equals(leftFunction(xs), rightFunction(xs)))
+
+const multipliersFor13 = [1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3]
+const multipliersFor10 = reverse(range(2, 11))
+const getMultipliers = targetLength => {
+    switch (targetLength) {
+    case 10:
+        return multipliersFor10
+    case 13:
+        return multipliersFor13
+    default:
+        return [0]
+    }
+}
+
+const zipMultThenSum = curry((xs, ys) => sum(zipWith(multiply, xs, ys)))
+
+const sanitizeInput = unsanitized =>
+    unsanitized
+        .split('')
+        .map(x => parseInt(x, 10))
+        .filter(compose(not, isNaN))
+// const sanitizeInput = compose(filter(compose(not, isNaN)), map(parseInt), split(''))
+
+const finalCalc   = curry((baseNumber, summed) => baseNumber - (summed % baseNumber))
+const getFinalCalculator = targetLength => {
+    switch (targetLength) {
+    case 10:
+        return finalCalc(11)
+    case 13:
+        return finalCalc(10)
+    default:
+        return _ => false
+    }
+}
+// const finalCalc13 = finalCalc(10)
+// const finalCalc10 = finalCalc(11)
+
+const validateIsbn = (finalCalculator, multipliers, potentialIsbn) =>
+    [potentialIsbn]
+        .map(potential =>
+            last(potential) === finalCalculator(zipMultThenSum(multipliers, init(potential)))
+        )[0]
+const checkIsbn = targetLength =>
+    unsanitized => {
+        const tryToSanitize = sanitizeInput(unsanitized)
+        if (tryToSanitize.length !== targetLength) {
+            return false
+        }
+
+        return validateIsbn(getFinalCalculator(targetLength), getMultipliers(targetLength), tryToSanitize)
+    }
+// const checkIsbn = (finalCalculator, multipliers) =>
+//     compose(
+//         equalsAppliedToParts(last, compose(finalCalculator, zipMultThenSum(multipliers), init)),
+//         sanitizeInput)
+const checkIsbn13 = checkIsbn(13)
+const checkIsbn10 = checkIsbn(10)
+
+console.log(checkIsbn13('9788445073803'))
+console.log(checkIsbn13('9788445073802'))
+console.log(checkIsbn10('0198526636'))
